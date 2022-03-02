@@ -38,6 +38,7 @@ app.get("/clompass", async (req, res) => {
                 let body = req.postData()
                 body = JSON.parse(body)
                 body.limit = 500;
+                delete body.forceTaskId
                 body = JSON.stringify(body)
                 req.continue({postData: body});
             } else {
@@ -94,8 +95,6 @@ app.get("/clompass", async (req, res) => {
                 }
             }
         })
-        
-    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36")
     console.log("navigating to compass site")
     await page.goto("https://lilydaleheights-vic.compass.education");
     await page.waitForSelector("#username");
