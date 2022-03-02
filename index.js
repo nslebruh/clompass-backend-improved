@@ -111,15 +111,6 @@ app.get("/clompass", async (req, res) => {
     })
     await page.waitForSelector("#c_bar")
     await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks")
-    //var element = await page.waitForSelector(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first")
-    //await page.waitForSelector(".x-boundlist-item")
-    //await page.$$eval(".x-boundlist-item", async (el) => {
-    //    for (i=0; i<el.length; i++) {
-    //        if (el[i].innerHTML === "2022 Academic") {
-    //            el[i].click()
-    //        }
-    //    }   
-    //})
     await page.waitForResponse((response) => {
         return response.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId") && response.status() === 200
     })
