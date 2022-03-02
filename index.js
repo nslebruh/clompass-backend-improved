@@ -27,7 +27,7 @@ app.get("/clompass", async (req, res) => {
     const password = req.query.password;
     let id = 0;
     console.log("starting puppeteer")
-    const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+    const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
     console.log("opening new page")
     let page = await browser.newPage()
     await page.setRequestInterception(true);
