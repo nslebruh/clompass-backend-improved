@@ -39,7 +39,6 @@ app.get("/clompass", async (req, res) => {
                 body = JSON.parse(body)
                 body.limit = 500;
                 body = JSON.stringify(body)
-                console.log(body)
                 req.continue({postData: body});
             } else {
                 req.continue();
