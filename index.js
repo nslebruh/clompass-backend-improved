@@ -17,12 +17,13 @@ app.get("/api", async (req, res) => {
 })
 
 app.get("/clompass", async (req, res) => {
-    console.log("request found")
+    console.log("request received")
     if (!req.query.username || !req.query.password) {
         res.status(400).send("This ain't it chief")
         return
     }
     const response = [];
+    let doneYet = false;
     const username = req.query.username;
     const password = req.query.password;
     let id = 0;
@@ -93,29 +94,40 @@ app.get("/clompass", async (req, res) => {
                     response.push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
                     id++; 
                 }
+              doneYet = true;
             }
         })
     console.log("navigating to compass site")
     await page.goto("https://lilydaleheights-vic.compass.education");
     await page.waitForSelector("#username");
-
+    console.log("inputting username")
     await page.$eval("#username", (el, username) => {
         el.value = username
     }, username)
+    console.log("inputting password")
     await page.$eval("#password", (el, password) => {
         el.value = password
     }, password)
+    console.log("clicking login button")
     await page.$eval("#button1", el => {
         el.disabled = false;
         el.click()
     })
+    console.log("waiting for compass homepage to load")
     await page.waitForSelector("#c_bar")
+    console.log("navigating to learning tasks page")
     await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks")
+    console.log("waiting for response")
     await page.waitForResponse((response) => {
         return response.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId") && response.status() === 200
     })
-    await sleep(500);
+    console.log("waiting for response to be processed")
+    while (doneYet !== true) {
+      await sleep(100)
+    }
+    console.log("closing browser")
     await browser.close();
+    console.log("sending response")
     res.status(200).send({message: "pog it worker", response: response})
     return
 }) 
