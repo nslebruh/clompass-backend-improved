@@ -3,6 +3,7 @@ const cors = require('cors');
 const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
+const res = require("express/lib/response");
 
 const PORT = process.env.PORT || 3001;
 
@@ -16,7 +17,7 @@ app.get("/api", async (req, res) => {
     res.status(200).send("api")
 })
 
-app.get("/clompass", async (req, res) => {
+app.get("/get/learningtasks", async (req, res) => {
     console.log("request received")
     if (!req.query.username || !req.query.password) {
         res.status(400).send("This ain't it chief")
@@ -133,9 +134,130 @@ app.get("/clompass", async (req, res) => {
     res.status(200).send({message: "pog it worker", response: response})
     return
 }) 
+
+app.get("/get/calender", async (req, res) => {
+  console.log("request received")
+  if (!req.query.username || !req.query.password) {
+      res.status(400).send("This ain't it chief")
+      return
+  }
+  const username = req.query.username;
+  const password = req.query.password;
+  console.log("starting puppeteer")
+  const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+  console.log("opening new page")
+  let page = await browser.newPage();
+  page.on('console', async (msg) => {
+    const msgArgs = msg.args();
+    for (let i = 0; i < msgArgs.length; ++i) {
+      console.log(await msgArgs[i].jsonValue());
+    }
+  });
+  console.log("navigating to compass site")
+  await page.goto("https://lilydaleheights-vic.compass.education");
+  await page.waitForSelector("#username");
+  console.log("inputting username")
+  await page.$eval("#username", (el, username) => {
+      el.value = username
+  }, username)
+  console.log("inputting password")
+  await page.$eval("#password", (el, password) => {
+      el.value = password
+  }, password)
+  console.log("clicking login button")
+  await page.$eval("#button1", el => {
+      el.disabled = false;
+      el.click()
+  })
+  console.log("waiting for compass homepage to load")
+  await page.waitForSelector("#c_bar")
+  await page.goto("https://lilydaleheights-vic.compass.education/Communicate/ManageCalendars.aspx")
+  await page.waitForSelector("#ctl00_cpS_lnkResetCalendarKey");
+  if (await page.$("#ctl00_cpS_lnkEnableSharedCalendar") !== null) {
+    await page.click("#ctl00_cpS_lnkEnableSharedCalendar")
+    await page.waitForSelector("#ctl00_cpM_lblPrivate")
+  }
+  const response = await page.evaluate(async () => {
+    let el = document.querySelector("#ctl00_cpM_lblPrivate")
+    let response = {url: ""}
+    response.url = el.innerText
+    return response
+  })
+  await browser.close();
+  res.status(200).send({message: "pog it worker", response: response})
+  return
+})
+
+app.get("/get/studentinfo", async (req, res) => {
+  console.log("request received")
+  if (!req.query.username || !req.query.password) {
+      res.status(400).send("This ain't it chief")
+      return
+  }
+  let response = {};
+  let doneYet = false
+  const username = req.query.username;
+  const password = req.query.password;
+  console.log("starting puppeteer")
+  const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+  console.log("opening new page")
+  let page = await browser.newPage();
+  page.on('console', async (msg) => {
+    const msgArgs = msg.args();
+    for (let i = 0; i < msgArgs.length; ++i) {
+      console.log(await msgArgs[i].jsonValue());
+    }
+  });
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+      req.continue()
+  });
+  page.on("requestfinished", async (request) => {
+      if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId")) {
+          let responsebody = await request.response().json();
+          console.log(responsebody)
+          responsebody = responsebody.d;
+          response.name = responsebody.userFullName
+          response.house = responsebody.userHouse
+          response.form = responsebody.userFormGroup
+          response.prefered_name = responsebody.userPreferredName
+          response.school_id = responsebody.userSussiID
+          response.image = "https://lilydaleheights-vic.compass.education/" + responsebody.userPhotoPath
+          doneYet = true
+      }
+  })
+  console.log("navigating to compass site")
+  await page.goto("https://lilydaleheights-vic.compass.education");
+  await page.waitForSelector("#username");
+  console.log("inputting username")
+  await page.$eval("#username", (el, username) => {
+      el.value = username
+  }, username)
+  console.log("inputting password")
+  await page.$eval("#password", (el, password) => {
+      el.value = password
+  }, password)
+  console.log("clicking login button")
+  await page.$eval("#button1", el => {
+      el.disabled = false;
+      el.click()
+  })
+  console.log("waiting for compass homepage to load")
+  await page.waitForSelector("#c_bar")
+  await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx")
+  await page.waitForResponse((res) => {
+    return res.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId") && res.status() === 200
+  })
+  while (doneYet !== true) {
+    await sleep(100)
+  }
+  await browser.close()
+  res.status(200).send({message: "pog it worker", response: response})
+})
 app.get('*', (req, res) => {
     console.log("request found")
     res.status(400).send("nah chief this ain't it")
+    return
   });
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
