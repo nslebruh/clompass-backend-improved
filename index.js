@@ -131,7 +131,7 @@ app.get("/get/learningtasks", async (req, res) => {
     console.log("closing browser")
     await browser.close();
     console.log("sending response")
-    res.status(200).send({message: "pog it worker", response: response})
+    res.status(200).send({message: "pog it worker", response_type: "learning_tasks", response_data: response})
     return
 }) 
 
@@ -183,8 +183,10 @@ app.get("/get/calender", async (req, res) => {
     response.url = el.innerText
     return response
   })
+  console.log("closing browser")
   await browser.close();
-  res.status(200).send({message: "pog it worker", response: response})
+  console.log("sending response")
+  res.status(200).send({message: "pog it worker", response_type: "schedule_url", response_data: response})
   return
 })
 
@@ -215,7 +217,6 @@ app.get("/get/studentinfo", async (req, res) => {
   page.on("requestfinished", async (request) => {
       if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId")) {
           let responsebody = await request.response().json();
-          console.log(responsebody)
           responsebody = responsebody.d;
           response.name = responsebody.userFullName
           response.house = responsebody.userHouse
@@ -244,15 +245,21 @@ app.get("/get/studentinfo", async (req, res) => {
   })
   console.log("waiting for compass homepage to load")
   await page.waitForSelector("#c_bar")
+  console.log("navigating to student info page")
   await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx")
+  console.log("waiting for response")
   await page.waitForResponse((res) => {
     return res.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId") && res.status() === 200
   })
+  console.log("found response")
+  console.log("waiting for info to be processed")
   while (doneYet !== true) {
     await sleep(100)
   }
+  console.log("closing browser")
   await browser.close()
-  res.status(200).send({message: "pog it worker", response: response})
+  console.log("sending response")
+  res.status(200).send({message: "pog it worker", response_type: "student_info", response_data: response})
 })
 app.get('*', (req, res) => {
     console.log("request found")
