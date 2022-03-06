@@ -179,8 +179,8 @@ app.get("/get/calender", async (req, res) => {
   }
   const response = await page.evaluate(async () => {
     let el = document.querySelector("#ctl00_cpM_lblPrivate")
-    let response = {url: ""}
-    response.url = el.innerText
+    let response = ""
+    response = el.innerText
     return response
   })
   console.log("closing browser")
