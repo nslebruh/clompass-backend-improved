@@ -147,6 +147,14 @@ app.get("/get/calender", async (req, res) => {
   const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   console.log("opening new page")
   let page = await browser.newPage();
+  page.on("request", request => {
+    if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
+      request.abort();
+    }
+    else {
+      request.continue()
+    }
+  })
   page.on('console', async (msg) => {
     const msgArgs = msg.args();
     for (let i = 0; i < msgArgs.length; ++i) {
@@ -197,7 +205,8 @@ app.get("/get/studentinfo", async (req, res) => {
       return
   }
   let response = {};
-  let doneYet = false
+  let doneYet1 = false
+  let doneYet2 = false
   const username = req.query.username;
   const password = req.query.password;
   console.log("starting puppeteer")
@@ -212,7 +221,19 @@ app.get("/get/studentinfo", async (req, res) => {
   });
   await page.setRequestInterception(true);
   page.on('request', (req) => {
+    if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
+      req.abort();
+    } else if (req.url().includes("https://lilydaleheights-vic.compass.education/Services/ChronicleV2.svc/GetUserChronicleFeed")) {
+      let postData = req.postData()
+      postData = JSON.parse(postData)
+      postData.startDate = "1969-12-31T23:00:00.000Z"
+      postData.pageSize =  100;
+      postData = JSON.stringify(postData)
+      req.continue({postData: postData})
+    } else {
       req.continue()
+    }
+      
   });
   page.on("requestfinished", async (request) => {
       if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId")) {
@@ -224,8 +245,32 @@ app.get("/get/studentinfo", async (req, res) => {
           response.prefered_name = responsebody.userPreferredName
           response.school_id = responsebody.userSussiID
           response.image = "https://lilydaleheights-vic.compass.education/" + responsebody.userPhotoPath
-          doneYet = true
-      }
+          doneYet1 = true
+      } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/ChronicleV2.svc/GetUserChronicleFeed")) {
+        let responsebody = await request.response().json();
+        console.log(responsebody)
+        console.log("found response")
+        responsebody = responsebody.d.data;
+        let list = []
+        for (i=0;i<responsebody.length;i++) {
+          let data = responsebody[i].chronicleEntries[0];
+          let createdTimestamp = data.createdTimestamp;
+          let occurredTimestamp = data.occurredTimestamp;
+          let name = data.templateName
+          let chronicles = [];
+          for (j=0; j<data.inputFields.length; j++) {
+            let field_name = data.inputFields[j].name
+            let description = data.inputFields[j].description
+            let value = data.inputFields[j].value
+            chronicles.push({name: field_name, description: description, value: value})
+          }
+          list.push({createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
+        }
+        
+        response.chronicles = list
+        doneYet2 = true
+    }
+        
   })
   console.log("navigating to compass site")
   await page.goto("https://lilydaleheights-vic.compass.education");
@@ -253,7 +298,7 @@ app.get("/get/studentinfo", async (req, res) => {
   })
   console.log("found response")
   console.log("waiting for info to be processed")
-  while (doneYet !== true) {
+  while (doneYet1 !== true || doneYet2 !== true) {
     await sleep(100)
   }
   console.log("closing browser")
@@ -262,7 +307,6 @@ app.get("/get/studentinfo", async (req, res) => {
   res.status(200).send({message: "pog it worker", response_type: "student_info", response_data: response})
 })
 app.get('*', (req, res) => {
-    console.log("request found")
     res.status(400).send("nah chief this ain't it")
     return
   });
