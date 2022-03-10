@@ -205,6 +205,7 @@ app.get("/get/studentinfo", async (req, res) => {
       return
   }
   let response = {};
+  let id = 0;
   let doneYet1 = false
   let doneYet2 = false
   const username = req.query.username;
@@ -264,7 +265,8 @@ app.get("/get/studentinfo", async (req, res) => {
             let value = data.inputFields[j].value.includes("[{\"valueOption\":") ? JSON.parse(data.inputFields[j].value) : data.inputFields[j].value
             chronicles.push({name: field_name, description: description, value: value})
           }
-          list.push({createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
+          list.push({id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
+          id++
         }
         
         response.chronicles = list
