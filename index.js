@@ -261,7 +261,7 @@ app.get("/get/studentinfo", async (req, res) => {
           for (j=0; j<data.inputFields.length; j++) {
             let field_name = data.inputFields[j].name
             let description = data.inputFields[j].description
-            let value = data.inputFields[j].value
+            let value = JSON.parse(data.inputFields[j].value)
             chronicles.push({name: field_name, description: description, value: value})
           }
           list.push({createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
