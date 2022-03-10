@@ -249,7 +249,6 @@ app.get("/get/studentinfo", async (req, res) => {
           doneYet1 = true
       } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/ChronicleV2.svc/GetUserChronicleFeed")) {
         let responsebody = await request.response().json();
-        console.log(responsebody)
         console.log("found response")
         responsebody = responsebody.d.data;
         let list = []
