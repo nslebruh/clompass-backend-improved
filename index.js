@@ -264,7 +264,7 @@ app.get("/get/studentinfo", async (req, res) => {
             let value = data.inputFields[j].value.includes("[{\"valueOption\":") ? () => {
               let data = data.inputFields[j].value.replace(/"value":/, '"values":');
 
-              JSON.parse(data.inputFields[j].value)
+              data = JSON.parse(data)
               return data
             } : data.inputFields[j].value
             chronicles.push({name: field_name, description: description, value: value})
