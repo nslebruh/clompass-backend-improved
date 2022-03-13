@@ -261,12 +261,22 @@ app.get("/get/studentinfo", async (req, res) => {
           for (j=0; j<data.inputFields.length; j++) {
             let field_name = data.inputFields[j].name
             let description = data.inputFields[j].description
-            let value = data.inputFields[j].value.includes("[{\"valueOption\":") ? () => {
-              let data = data.inputFields[j].value.replace(/"value":/, '"values":');
-
-              data = JSON.parse(data)
-              return data
-            } : data.inputFields[j].value
+            let value = []
+            if (data.inputFields[j].value instanceof Array) {
+              for (k=0; k<data.inputFields[j].value.length; k++) {
+                let o = {}
+                o.type = "option"
+                o.name = data.inputFields[j].value[k].valueOption
+                o.checked = data.inputFields[j].value[k].isChecked
+                value.push(o)
+              }
+            } else {
+              let o = {}
+              o.type = "text"
+              o.text = data.inputFields[j].value
+              value.push(o)
+            }
+            
             chronicles.push({name: field_name, description: description, value: value})
           }
           list.push({id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
