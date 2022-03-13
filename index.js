@@ -262,7 +262,13 @@ app.get("/get/studentinfo", async (req, res) => {
             let field_name = data.inputFields[j].name
             let description = data.inputFields[j].description
             let value = []
-            let values = JSON.parse(data.inputFields[j].value)
+            let values;
+            if (data.inputFields[j].value.includes("[{")) {
+              values = JSON.parse(data.inputFields[j].value)
+            } else {
+              values = data.inputFields[j].value
+            }
+            
             if (values instanceof Array) {
               for (k=0; k<values.length; k++) {
                 let o = {}
