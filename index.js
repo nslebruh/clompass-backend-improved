@@ -262,18 +262,19 @@ app.get("/get/studentinfo", async (req, res) => {
             let field_name = data.inputFields[j].name
             let description = data.inputFields[j].description
             let value = []
-            if (data.inputFields[j].value instanceof Array) {
-              for (k=0; k<data.inputFields[j].value.length; k++) {
+            let values = JSON.parse(data.inputFields[j].value)
+            if (values instanceof Array) {
+              for (k=0; k<values.length; k++) {
                 let o = {}
                 o.type = "option"
-                o.name = data.inputFields[j].value[k].valueOption
-                o.checked = data.inputFields[j].value[k].isChecked
+                o.name = values[k].valueOption
+                o.checked = values[k].isChecked
                 value.push(o)
               }
             } else {
               let o = {}
               o.type = "text"
-              o.text = data.inputFields[j].value
+              o.text = values
               value.push(o)
             }
             
