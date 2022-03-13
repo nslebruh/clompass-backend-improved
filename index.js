@@ -284,7 +284,7 @@ app.get("/get/studentinfo", async (req, res) => {
               value.push(o)
             }
             
-            chronicles.push({name: field_name, description: description, value: value})
+            chronicles.push({name: field_name, description: description, values: value})
           }
           list.push({id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
           id++
