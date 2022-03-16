@@ -210,7 +210,7 @@ app.get("/get/lessonplans", async (req, res) => {
   const username = req.query.username;
   const password = req.query.password;
   console.log("starting puppeteer")
-  const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+  const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   console.log("opening new page")
   let page = await browser.newPage();
   page.on('console', async (msg) => {
