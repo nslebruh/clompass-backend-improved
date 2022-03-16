@@ -198,6 +198,147 @@ app.get("/get/calender", async (req, res) => {
   return
 })
 
+app.get("/get/lessonplans", async (req, res) => {
+  console.log("request received")
+  if (!req.query.username || !req.query.password) {
+    res.status(400).send("This ain't it chief")
+    return
+  }
+  let i = 0
+  const response = [];
+  let doneYet = {};
+  const username = req.query.username;
+  const password = req.query.password;
+  console.log("starting puppeteer")
+  const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+  console.log("opening new page")
+  let page = await browser.newPage();
+  page.on('console', async (msg) => {
+    const msgArgs = msg.args();
+    for (let i = 0; i < msgArgs.length; ++i) {
+      console.log(await msgArgs[i].jsonValue());
+    }
+  });
+  await page.setRequestInterception(true);
+  page.on("request", request => {
+    if(request.resourceType() == 'stylesheet' || request.resourceType() == 'font' || request.resourceType() == 'image'){
+      request.abort();
+    } else {
+      request.continue()
+    }
+  })
+  page.on("requestfinished", async (request) => {
+    if (request.response().url() === "https://lilydaleheights-vic.compass.education/Services/Activity.svc/GetLessonsByActivityId?sessionstate=readonly") {
+      
+    console.log("found response")
+    console.log(request.response().url())
+      const res = await request.response().json()
+      const responsebody = res.d
+      let subject = {
+        school_id: "",
+        name: "",
+        year: "",
+        id: "",
+        activity_id: "",
+        lessons: [],
+        teacher: "",
+        teacher_code :"",
+        teacher_image_url: "",
+        attendee_ids: [],
+      }
+      subject.year = responsebody.AcademicYearLevel // year the subject took place in (2022)
+      subject.name = responsebody.SubjectName // name of subject
+      subject.school_id = responsebody.ActivityDisplayName // school code (7ENGA)
+      subject.activity_id = responsebody.ActivityId // identifiable id 
+      subject.id = responsebody.SubjectId // useless id but might mean something idk
+      subject.teacher = responsebody.Instances[0].ManagerTextReadable
+      subject.teacher_code = responsebody.Instances[0].m
+      subject.teacher_image_url = "https://lilydaleheights-vic.compass.education" + responsebody.Instances[0].ManagerPhotoPath
+      let instances = responsebody.Instances
+      for (let j = 0; j<instances.length; j++) {
+        let lesson = {
+          location: "",
+          teacher: "",
+          teacher_code: "",
+          teacher_image_url: "",
+          display_time: "",
+          start: "",
+          finish: "",
+          plan: {
+            id: "",
+            node_id: "",
+            url: ""
+          }
+        }
+        lesson.location = instances[j].l
+        lesson.teacher = instances[j].ManagerTextReadable
+        lesson.teacher_code = instances[j].m
+        lesson.teacher_image_url = "https://lilydaleheights-vic.compass.education" + instances[j].ManagerPhotoPath
+        lesson.display_time = instances[j].dt
+        lesson.start = new Date(new Date(instances[j].st).getTime() - (60 * 60 * 1000)).getTime()
+        lesson.end = new Date(new Date(instances[j].fn).getTime() - (60 * 60 * 1000)).getTime()
+        if (instances[j].lp.fileAssetId !== null) {
+          lesson.plan.id = instances[j].lp.fileAssetId
+          lesson.plan.node_id = instances[j].lp.wnid
+          lesson.plan.url = `https://lilydaleheights-vic.compass.education/Services/FileAssets.svc/DownloadFile?sessionstate=readonly&id=${instances[j].lp.fileAssetId}&nodeId=${instances[j].lp.wnid}`
+        } else {
+          lesson.plan = null
+        }
+        subject.lessons.push(lesson)
+      }
+      //for (let j = 0; j<responsebody.instances.length; j++) {
+      //  subject.lessons.push(responsebody.instances[j])
+      //}
+      response.push(subject)
+      doneYet[i] = true;
+      console.log(doneYet)
+      
+    }
+  })
+  console.log("navigating to compass site")
+  await page.goto("https://lilydaleheights-vic.compass.education");
+  await page.waitForSelector("#username");
+  console.log("inputting username")
+  await page.$eval("#username", (el, username) => {
+      el.value = username
+  }, username)
+  console.log("inputting password")
+  await page.$eval("#password", (el, password) => {
+      el.value = password
+  }, password)
+  console.log("clicking login button")
+  await page.$eval("#button1", el => {
+      el.disabled = false;
+      el.click()
+  })
+  console.log("waiting for compass homepage to load")
+  await page.waitForSelector("#c_bar");
+  console.log("sorting through subjects");
+  const elements = await page.$$("#mnu_left > li:nth-child(4) > ul > li");
+  const as = await page.evaluate(() => {
+    let as = [];
+    let element = document.querySelectorAll("#mnu_left > li:nth-child(4) > ul > li");
+    for (let i = 0; i<element.length; i++) {
+      if (element[i].innerHTML.includes("- ")) {
+        as.push(element[i].querySelector("a").href);
+      };
+    };
+    return as;
+    
+  });
+  for (i; i<as.length; i++) {
+    await page.goto(as[i]);
+    while (!doneYet[i]) {
+      console.log("waiting for response")
+      await sleep(250);
+    };
+  };
+  console.log("closing browser")
+  await browser.close()
+  console.log("sending response")
+  res.status(200).send({message: "pog it worker", response_type: "lessonplans", response_data: response})
+})
+
 app.get("/get/studentinfo", async (req, res) => {
   console.log("request received")
   if (!req.query.username || !req.query.password) {
