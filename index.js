@@ -23,6 +23,9 @@ app.get("/get/learningtasks", async (req, res) => {
         res.status(400).send("This ain't it chief")
         return
     }
+    let requestNumber = 0
+    let foundLogin = false
+    let loginFailed = false
     const response = [];
     let doneYet = false;
     const username = req.query.username;
@@ -48,57 +51,71 @@ app.get("/get/learningtasks", async (req, res) => {
             }
         });
         page.on("requestfinished", async (request) => {
-            if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId")) {
-                let responsebody = await request.response().json();
-                responsebody = responsebody.d.data;
-                for (let i = 0; i < responsebody.length; i++) {
-                    let task = responsebody[i];
-                    let name = task.name;
-                    let subject_name = task.subjectName;
-                    let subject_code = task.activityName;
-                    let attachments = [];
-                    let submissions = [];
-                    let description = task.description;
-                    let official_due_date = task.dueDateTimestamp;
-                    let individual_due_date = task.students[0].dueDateTimestamp;
-                    individual_due_date ? individual_due_date = individual_due_date : individual_due_date = official_due_date;
-                    let submission_status;
-                    let submission_svg_link;
-                    if (task.students[0].submissionStatus === 1) {
-                        submission_status = "Pending";
-                        submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/pending.svg";
-                      } else if (task.students[0].submissionStatus === 2) {
-                        submission_status = "Overdue";
-                        submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/overdue.svg";
-                      } else if (task.students[0].submissionStatus === 3) {
-                        submission_status = "On time";
-                        submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/ontime.svg"
-                      } else if (task.students[0].submissionStatus === 4) {
-                        submission_status = "Recieved late";
-                        submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/receivedlate.svg";
-                      } else {
-                        submission_status = "Unknown"
-                      }
-                    if (task.attachments != null) {
-                        for (let j = 0; j < task.attachments.length; j++) {
-                            attachments.push({name: task.attachments[j].name, link: "https://lilydaleheights-vic.compass.education/Services/FileAssets.svc/DownloadFile?id=" + task.attachments[j].id + "&originalFileName=" + task.attachments[j].fileName.replace(/ /g, "%20"),});
-                        }
-                      } else {
-                        attachments = "None";
-                      }
-                    
-                    if (task.students[0].submissions != null) {
-                      for (let j = 0; j < task.students[0].submissions.length; j++) {
-                            submissions.push({name: task.students[0].submissions[j].fileName, link: "https://lilydaleheights-vic.compass.education/Services/FileDownload/FileRequestHandler?FileDownloadType=2&taskId=" + task.students[0].taskId + "&submissionId=" + task.students[0].submissions[j].id});
-                      }
-                    } else {
-                      submissions = "None"
-                    }
-                    response.push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
-                    id++; 
-                }
-              doneYet = true;
+          if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+            console.log(requestNumber)
+            requestNumber++
+            console.log("found request")
+            if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+              console.log("is a redirect")
+              loginFailed = false
+              foundLogin = true
+            } else {
+              console.log("not a redirect")
+              loginFailed = true
+              foundLogin = true
+
             }
+          } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId")) {
+            let responsebody = await request.response().json();
+            responsebody = responsebody.d.data;
+            for (let i = 0; i < responsebody.length; i++) {
+                let task = responsebody[i];
+                let name = task.name;
+                let subject_name = task.subjectName;
+                let subject_code = task.activityName;
+                let attachments = [];
+                let submissions = [];
+                let description = task.description;
+                let official_due_date = task.dueDateTimestamp;
+                let individual_due_date = task.students[0].dueDateTimestamp;
+                individual_due_date ? individual_due_date = individual_due_date : individual_due_date = official_due_date;
+                let submission_status;
+                let submission_svg_link;
+                if (task.students[0].submissionStatus === 1) {
+                    submission_status = "Pending";
+                    submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/pending.svg";
+                  } else if (task.students[0].submissionStatus === 2) {
+                    submission_status = "Overdue";
+                    submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/overdue.svg";
+                  } else if (task.students[0].submissionStatus === 3) {
+                    submission_status = "On time";
+                    submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/ontime.svg"
+                  } else if (task.students[0].submissionStatus === 4) {
+                    submission_status = "Recieved late";
+                    submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/receivedlate.svg";
+                  } else {
+                    submission_status = "Unknown"
+                  }
+                if (task.attachments != null) {
+                    for (let j = 0; j < task.attachments.length; j++) {
+                        attachments.push({name: task.attachments[j].name, link: "https://lilydaleheights-vic.compass.education/Services/FileAssets.svc/DownloadFile?id=" + task.attachments[j].id + "&originalFileName=" + task.attachments[j].fileName.replace(/ /g, "%20"),});
+                    }
+                  } else {
+                    attachments = "None";
+                  }
+                
+                if (task.students[0].submissions != null) {
+                  for (let j = 0; j < task.students[0].submissions.length; j++) {
+                        submissions.push({name: task.students[0].submissions[j].fileName, link: "https://lilydaleheights-vic.compass.education/Services/FileDownload/FileRequestHandler?FileDownloadType=2&taskId=" + task.students[0].taskId + "&submissionId=" + task.students[0].submissions[j].id});
+                  }
+                } else {
+                  submissions = "None"
+                }
+                response.push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
+                id++; 
+              }
+            doneYet = true;
+          }   
         })
     console.log("navigating to compass site")
     await page.goto("https://lilydaleheights-vic.compass.education");
@@ -116,6 +133,15 @@ app.get("/get/learningtasks", async (req, res) => {
         el.disabled = false;
         el.click()
     })
+    while (foundLogin === false) {
+      console.log("waiting for login response")
+      await sleep(250)
+    }
+    if (loginFailed === true) {
+      console.log("login failed")
+      res.status(400).send({message: "it no worke", error: "login failed"})
+      return
+    }
     console.log("waiting for compass homepage to load")
     await page.waitForSelector("#c_bar")
     console.log("navigating to learning tasks page")
@@ -141,6 +167,9 @@ app.get("/get/calender", async (req, res) => {
       res.status(400).send("This ain't it chief")
       return
   }
+  let requestNumber = 0
+  let loginFailed = false
+  let foundLogin = false
   const username = req.query.username;
   const password = req.query.password;
   console.log("starting puppeteer")
@@ -161,6 +190,24 @@ app.get("/get/calender", async (req, res) => {
       console.log(await msgArgs[i].jsonValue());
     }
   });
+  page.on("requestfinished", async (request) => {
+    if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+      console.log(requestNumber)
+      requestNumber++
+      console.log("found request")
+      if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+        console.log("is a redirect")
+        loginFailed = false
+        foundLogin = true
+      } else {
+        console.log("not a redirect")
+        loginFailed = true
+        foundLogin = true
+        
+      }
+    }
+  })
+  
   console.log("navigating to compass site")
   await page.goto("https://lilydaleheights-vic.compass.education");
   await page.waitForSelector("#username");
@@ -177,6 +224,15 @@ app.get("/get/calender", async (req, res) => {
       el.disabled = false;
       el.click()
   })
+  while (foundLogin === false) {
+    console.log("waiting for login response")
+    await sleep(250)
+  }
+  if (loginFailed === true) {
+    console.log("login failed")
+    res.status(400).send({message: "it no worke", error: "login failed"})
+    return
+  }
   console.log("waiting for compass homepage to load")
   await page.waitForSelector("#c_bar")
   await page.goto("https://lilydaleheights-vic.compass.education/Communicate/ManageCalendars.aspx")
@@ -205,6 +261,9 @@ app.get("/get/lessonplans", async (req, res) => {
     return
   }
   let i = 0
+  let requestNumber = 0
+  let loginFailed = false
+  let foundLogin = false;
   const response = [];
   let doneYet = {};
   const username = req.query.username;
@@ -228,10 +287,23 @@ app.get("/get/lessonplans", async (req, res) => {
     }
   })
   page.on("requestfinished", async (request) => {
-    if (request.response().url() === "https://lilydaleheights-vic.compass.education/Services/Activity.svc/GetLessonsByActivityId?sessionstate=readonly") {
-      
-    console.log("found response")
-    console.log(request.response().url())
+    if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+      console.log(requestNumber)
+      requestNumber++
+      console.log("found request")
+      if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+        console.log("is a redirect")
+        loginFailed = false
+        foundLogin = true
+      } else {
+        console.log("not a redirect")
+        loginFailed = true
+        foundLogin = true
+        
+      }
+    } else if (request.response().url() === "https://lilydaleheights-vic.compass.education/Services/Activity.svc/GetLessonsByActivityId?sessionstate=readonly") { 
+      console.log("found response")
+      console.log(request.response().url())
       const res = await request.response().json()
       const responsebody = res.d
       let subject = {
@@ -286,14 +358,10 @@ app.get("/get/lessonplans", async (req, res) => {
         }
         subject.lessons.push(lesson)
       }
-      //for (let j = 0; j<responsebody.instances.length; j++) {
-      //  subject.lessons.push(responsebody.instances[j])
-      //}
       response.push(subject)
       doneYet[i] = true;
       console.log(doneYet)
-      
-    }
+      }
   })
   console.log("navigating to compass site")
   await page.goto("https://lilydaleheights-vic.compass.education");
@@ -311,6 +379,15 @@ app.get("/get/lessonplans", async (req, res) => {
       el.disabled = false;
       el.click()
   })
+  while (foundLogin === false) {
+    console.log("waiting for login response")
+    await sleep(250)
+  }
+  if (loginFailed === true) {
+    console.log("login failed")
+    res.status(400).send({message: "it no worke", error: "login failed"})
+    return
+  }
   console.log("waiting for compass homepage to load")
   await page.waitForSelector("#c_bar");
   console.log("sorting through subjects");
@@ -345,6 +422,9 @@ app.get("/get/studentinfo", async (req, res) => {
       res.status(400).send("This ain't it chief")
       return
   }
+  let requestNumber = 0
+  let loginFailed = false
+  let foundLogin = false
   let response = {};
   let id = 0;
   let doneYet1 = false
@@ -378,63 +458,73 @@ app.get("/get/studentinfo", async (req, res) => {
       
   });
   page.on("requestfinished", async (request) => {
-      if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId")) {
-          let responsebody = await request.response().json();
-          responsebody = responsebody.d;
-          response.name = responsebody.userFullName
-          response.house = responsebody.userHouse
-          response.form = responsebody.userFormGroup
-          response.prefered_name = responsebody.userPreferredName
-          response.school_id = responsebody.userSussiID
-          response.image = "https://lilydaleheights-vic.compass.education/" + responsebody.userPhotoPath
-          doneYet1 = true
-      } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/ChronicleV2.svc/GetUserChronicleFeed")) {
+    if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+      console.log(requestNumber)
+      requestNumber++
+      console.log("found request")
+      if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+        console.log("is a redirect")
+        loginFailed = false
+        foundLogin = true
+      } else {
+        console.log("not a redirect")
+        loginFailed = true
+        foundLogin = true
+      }
+    } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId")) {
         let responsebody = await request.response().json();
-        console.log("found response")
-        responsebody = responsebody.d.data;
-        let list = []
-        for (i=0;i<responsebody.length;i++) {
-          let data = responsebody[i].chronicleEntries[0];
-          let createdTimestamp = data.createdTimestamp;
-          let occurredTimestamp = data.occurredTimestamp;
-          let name = data.templateName
-          let chronicles = [];
-          for (j=0; j<data.inputFields.length; j++) {
-            let field_name = data.inputFields[j].name
-            let description = data.inputFields[j].description
-            let value = []
-            let values;
-            if (data.inputFields[j].value.includes("[{")) {
-              values = JSON.parse(data.inputFields[j].value)
-            } else {
-              values = data.inputFields[j].value
-            }
-            
-            if (values instanceof Array) {
-              for (k=0; k<values.length; k++) {
-                let o = {}
-                o.type = "option"
-                o.name = values[k].valueOption
-                o.checked = values[k].isChecked
-                value.push(o)
-              }
-            } else {
+        responsebody = responsebody.d;
+        response.name = responsebody.userFullName
+        response.house = responsebody.userHouse
+        response.form = responsebody.userFormGroup
+        response.prefered_name = responsebody.userPreferredName
+        response.school_id = responsebody.userSussiID
+        response.image = "https://lilydaleheights-vic.compass.education/" + responsebody.userPhotoPath
+        doneYet1 = true
+    } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/ChronicleV2.svc/GetUserChronicleFeed")) {
+      let responsebody = await request.response().json();
+      console.log("found response")
+      responsebody = responsebody.d.data;
+      let list = []
+      for (i=0;i<responsebody.length;i++) {
+        let data = responsebody[i].chronicleEntries[0];
+        let createdTimestamp = data.createdTimestamp;
+        let occurredTimestamp = data.occurredTimestamp;
+        let name = data.templateName
+        let chronicles = [];
+        for (j=0; j<data.inputFields.length; j++) {
+          let field_name = data.inputFields[j].name
+          let description = data.inputFields[j].description
+          let value = []
+          let values;
+          if (data.inputFields[j].value.includes("[{")) {
+            values = JSON.parse(data.inputFields[j].value)
+          } else {
+            values = data.inputFields[j].value
+          }
+
+          if (values instanceof Array) {
+            for (k=0; k<values.length; k++) {
               let o = {}
-              o.type = "text"
-              o.text = values
+              o.type = "option"
+              o.name = values[k].valueOption
+              o.checked = values[k].isChecked
               value.push(o)
             }
-            
-            chronicles.push({name: field_name, description: description, values: value})
+          } else {
+            let o = {}
+            o.type = "text"
+            o.text = values
+            value.push(o)
           }
-          list.push({id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
-          id++
+          chronicles.push({name: field_name, description: description, values: value})
         }
-        
-        response.chronicles = list
-        doneYet2 = true
+        list.push({id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
+        id++
+      }
+      response.chronicles = list
+      doneYet2 = true
     }
-        
   })
   console.log("navigating to compass site")
   await page.goto("https://lilydaleheights-vic.compass.education");
@@ -452,6 +542,15 @@ app.get("/get/studentinfo", async (req, res) => {
       el.disabled = false;
       el.click()
   })
+  while (foundLogin === false) {
+    console.log("waiting for login response")
+    await sleep(250)
+  }
+  if (loginFailed === true) {
+    console.log("login failed")
+    res.status(400).send({message: "it no worke", error: "login failed"})
+    return
+  }
   console.log("waiting for compass homepage to load")
   await page.waitForSelector("#c_bar")
   console.log("navigating to student info page")
