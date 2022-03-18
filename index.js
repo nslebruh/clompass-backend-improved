@@ -179,12 +179,12 @@ app.get("/get/calender", async (req, res) => {
   const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   console.log("opening new page")
   let page = await browser.newPage();
-  page.on("request", request => {
+  page.on("request", req => {
     if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
-      request.abort();
+      req.abort();
     }
     else {
-      request.continue()
+      req.continue()
     }
   })
   page.on('console', async (msg) => {
