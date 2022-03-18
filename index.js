@@ -179,6 +179,7 @@ app.get("/get/calender", async (req, res) => {
   const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   console.log("opening new page")
   let page = await browser.newPage();
+  await page.setRequestInterception(true);
   page.on("request", req => {
     if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
       req.abort();
