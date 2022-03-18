@@ -52,10 +52,13 @@ app.get("/get/learningtasks", async (req, res) => {
         });
         page.on("requestfinished", async (request) => {
           if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+            console.log("found login request")
             console.log(requestNumber)
-            requestNumber++
-            console.log("found request")
-            if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+            if (requestNumber !== 1) {
+              requestNumber++
+              return
+            }
+            if (request.response().status() >= 300 && request.response().status() <= 399) {
               console.log("is a redirect")
               loginFailed = false
               foundLogin = true
@@ -193,9 +196,11 @@ app.get("/get/calender", async (req, res) => {
   page.on("requestfinished", async (request) => {
     if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
       console.log(requestNumber)
-      requestNumber++
-      console.log("found request")
-      if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+      if (requestNumber !== 1) {
+        requestNumber++
+        return
+      }
+      if (request.response().status() >= 300 && request.response().status() <= 399) {
         console.log("is a redirect")
         loginFailed = false
         foundLogin = true
@@ -289,9 +294,12 @@ app.get("/get/lessonplans", async (req, res) => {
   page.on("requestfinished", async (request) => {
     if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
       console.log(requestNumber)
-      requestNumber++
+      if (requestNumber !== 1) {
+        requestNumber++
+        return
+      }
       console.log("found request")
-      if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+      if (request.response().status() >= 300 && request.response().status() <= 399) {
         console.log("is a redirect")
         loginFailed = false
         foundLogin = true
@@ -460,9 +468,12 @@ app.get("/get/studentinfo", async (req, res) => {
   page.on("requestfinished", async (request) => {
     if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
       console.log(requestNumber)
-      requestNumber++
+      if (requestNumber !== 1) {
+        requestNumber++
+        return
+      }
       console.log("found request")
-      if (request.response().status() >= 300 && request.response().status() <= 399 && requestNumber === 2) {
+      if (request.response().status() >= 300 && request.response().status() <= 399) {
         console.log("is a redirect")
         loginFailed = false
         foundLogin = true
