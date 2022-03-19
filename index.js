@@ -267,6 +267,7 @@ app.get("/get/lessonplans", async (req, res) => {
     return
   }
   let i = 0
+  let key = 0
   let requestNumber = 0
   let loginFailed = false
   let foundLogin = false;
@@ -338,6 +339,7 @@ app.get("/get/lessonplans", async (req, res) => {
       let instances = responsebody.Instances
       for (let j = 0; j<instances.length; j++) {
         let lesson = {
+          key,
           location: "",
           teacher: "",
           teacher_code: "",
@@ -366,6 +368,7 @@ app.get("/get/lessonplans", async (req, res) => {
           lesson.plan = null
         }
         subject.lessons.push(lesson)
+        key++
       }
       response.push(subject)
       doneYet[i] = true;
