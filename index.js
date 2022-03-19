@@ -358,8 +358,8 @@ app.get("/get/lessonplans", async (req, res) => {
         lesson.teacher_code = instances[j].m
         lesson.teacher_image_url = "https://lilydaleheights-vic.compass.education" + instances[j].ManagerPhotoPath
         lesson.display_time = instances[j].dt
-        lesson.start = new Date(new Date(instances[j].st).getTime() - (60 * 60 * 1000)).getTime()
-        lesson.end = new Date(new Date(instances[j].fn).getTime() - (60 * 60 * 1000)).getTime()
+        lesson.start = new Date(instances[j].st).getTime()
+        lesson.end = new Date(instances[j].fn).getTime()
         if (instances[j].lp.fileAssetId !== null) {
           lesson.plan.id = instances[j].lp.fileAssetId
           lesson.plan.node_id = instances[j].lp.wnid
