@@ -2,9 +2,9 @@
   "name": "clompass-backend-improved",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.mjs",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +21,12 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.3",
-    "puppeteer": "^13.4.1"
+    "firebase": "^9.6.9",
+    "http": "^0.0.1-security",
+    "puppeteer": "^13.4.1",
+    "socket.io": "^4.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
   }
 }
