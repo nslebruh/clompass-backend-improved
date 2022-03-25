@@ -45,19 +45,16 @@ socket_app.on("connection", (socket) => {
     console.log("Client disconnected")
   })
   socket.on("learningtasks", async (username, password) => {
-    socket.emit("message", `${username}: request recieved`)
-    socket.emit("message", `${username}: starting puppeteer`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username}: request recieved`)
     let id = 0
     let doneYet = false
     let loginFailed = false
     let foundLogin = false
     let requestNumber = 0;
     const response = [];
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    })
-    socket.emit("message", `${username}: opening new page`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username}: starting puppeteer`)
+    const browser = await puppeteer.launch({headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"]})
+    socket.emit("message", 102, new Date().toUTCString(), `${username}: opening new page`)
     const page = await browser.newPage()
     await page.setRequestInterception(true);
     page.on('request', (req) => {
@@ -81,7 +78,7 @@ socket_app.on("connection", (socket) => {
           return
         }
         if (request.response().status() >= 300 && request.response().status() <= 399) {
-          socket.emit("message", `${username.toUpperCase()}: Login successful`)
+          socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login successful`)
           loginFailed = false
           foundLogin = true
         } else {
@@ -139,55 +136,55 @@ socket_app.on("connection", (socket) => {
         doneYet = true;
       }   
     })
-    socket.emit("message", `${username.toUpperCase()}: Navigating to compass site`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Navigating to compass site`)
     await page.goto("https://lilydaleheights-vic.compass.education");
     await page.waitForSelector("#username");
-    socket.emit("message", `${username.toUpperCase()}: Inputting username`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Inputting username`)
     await page.$eval("#username", (el, username) => {
         el.value = username
     }, username)
-    socket.emit("message", `${username.toUpperCase()}: Inputting password`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Inputting password`)
     await page.$eval("#password", (el, password) => {
         el.value = password
     }, password)
-    socket.emit("message", `${username.toUpperCase()}: Clicking login button`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Clicking login button`)
     await page.$eval("#button1", el => {
         el.disabled = false;
         el.click()
     })
     while (foundLogin === false) {
-      socket.emit("message", `${username.toUpperCase()}: Waiting for login response`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for login response`)
       await sleep(250)
     }
     if (loginFailed === true) {
-      socket.emit("message", `${username.toUpperCase()}: Login failed`)
-      socket.emit("message", `${username.toUpperCase()}: Closing puppeteer`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login failed`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Closing puppeteer`)
       await browser.close()
-      socket.emit("message", `${username.toUpperCase()}: Sending response`)
-      socket.emit("data", {message: "it no worke", response_type: "error", error: "login failed"})
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+      socket.emit("error", 401, "it no worke", "login failed")
       return
     }
-    socket.emit("message", `${username.toUpperCase()}: Waiting for compass homepage to load`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for compass homepage to load`)
     await page.waitForSelector("#c_bar")
-    socket.emit("message", `${username.toUpperCase()}: Navigating to learning tasks page`)
+    socket.emit("message", 102, new Date().toUTCString(),`${username.toUpperCase()}: Navigating to learning tasks page`)
     await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks")
-    socket.emit("message", `${username.toUpperCase()}: Waiting for response to be processed`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for response to be processed`)
     while (doneYet !== true) {
       await sleep(100)
     }
-    socket.emit("message", `${username.toUpperCase()}: Closing puppeteer`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Closing puppeteer`)
     await browser.close();
-    socket.emit("message", `${username.toUpperCase()}: Sending response`)
-    socket.emit("data", {message: "pog it worker", response_type: "learning_tasks", response_data: response})
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+    socket.emit("data", 200, "pog it worker", "learning_tasks", response)
     return
   })
   socket.on("schedule", async (username, password) => {
     let requestNumber = 0
     let loginFailed = false
     let foundLogin = false
-    socket.emit("message", `${username.toUpperCase()}: Starting puppeteer`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Starting puppeteer`)
     const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
-    socket.emit("message", `${username.toUpperCase()}: Opening new page`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Opening new page`)
     let page = await browser.newPage();
     await page.setRequestInterception(true);
     page.on("request", req => {
@@ -205,7 +202,7 @@ socket_app.on("connection", (socket) => {
           return
         }
         if (request.response().status() >= 300 && request.response().status() <= 399) {
-          socket.emit("message", `${username.toUpperCase()}: Login successful`)
+          socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login successful`)
           loginFailed = false
           foundLogin = true
         } else {
@@ -214,39 +211,39 @@ socket_app.on("connection", (socket) => {
         }
       }
     })
-    socket.emit("message", `${username.toUpperCase()}: Navigating to compass site`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Navigating to compass site`)
     await page.goto("https://lilydaleheights-vic.compass.education");
     await page.waitForSelector("#username");
-    socket.emit("message", `${username.toUpperCase()}: Inputting username`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Inputting username`)
     await page.$eval("#username", (el, username) => {
         el.value = username
     }, username)
-    socket.emit("message", `${username.toUpperCase()}: Inputting password`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Inputting password`)
     await page.$eval("#password", (el, password) => {
         el.value = password
     }, password)
-    socket.emit("message", `${username.toUpperCase()}: Clicking login button`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Clicking login button`)
     await page.$eval("#button1", el => {
         el.disabled = false;
         el.click()
     })
     while (foundLogin === false) {
-      socket.emit("message", `${username.toUpperCase()}: Waiting for login response`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for login response`)
       await sleep(250)
     }
     if (loginFailed === true) {
-      socket.emit("message", `${username.toUpperCase()}: Login failed`)
-      socket.emit("message", `${username.toUpperCase()}: closing puppeteer`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login failed`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: closing puppeteer`)
       await browser.close()
-      socket.emit("message", `${username.toUpperCase()}: Sending response`)
-      socket.emit("data", {message: "it no worke", response_type: "error", error: "login failed"})
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+      socket.emit("error", 401, "it no worke", "login failed")
       return
     }
-    socket.emit("message", `${username.toUpperCase()}: Waiting for compass homepage to load`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for compass homepage to load`)
     await page.waitForSelector("#c_bar")
-    socket.emit("message", `${username.toUpperCase()}: Navigating to schedule page`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Navigating to schedule page`)
     await page.goto("https://lilydaleheights-vic.compass.education/Communicate/ManageCalendars.aspx")
-    socket.emit("message", `${username.toUpperCase()}: Waiting for schedule page to load`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for schedule page to load`)
     await page.waitForSelector("#ctl00_cpS_lnkResetCalendarKey");
     if (await page.$("#ctl00_cpS_lnkEnableSharedCalendar") !== null) {
       await page.click("#ctl00_cpS_lnkEnableSharedCalendar")
@@ -258,10 +255,10 @@ socket_app.on("connection", (socket) => {
       response = el.innerText
       return response
     })
-    socket.emit("message", `${username.toUpperCase()}: Closing puppeteer`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Closing puppeteer`)
     await browser.close();
-    socket.emit("message", `${username.toUpperCase()}: Sending response`)
-    socket.emit("data", {message: "pog it worker", response_type: "schedule_url", response_data: response})
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+    socket.emit("data", 200, "pog it worker", "schedule_url", response)
     return
   })
   socket.on("subjects", async (username, password) => {
@@ -271,9 +268,9 @@ socket_app.on("connection", (socket) => {
     let foundLogin = false;
     const response = [];
     let doneYet = {};
-    socket.emit("message", `${username.toUpperCase()}: Starting puppeteer`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Starting puppeteer`)
     const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
-    socket.emit("message", `${username.toUpperCase()}: Opening new page`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Opening new page`)
     let page = await browser.newPage();
     await page.setRequestInterception(true);
     page.on("request", request => {
@@ -290,7 +287,7 @@ socket_app.on("connection", (socket) => {
           return
         }
         if (request.response().status() >= 300 && request.response().status() <= 399) {
-          socket.emit("message", `${username.toUpperCase()}: Login successful`)
+          socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login successful`)
           loginFailed = false
           foundLogin = true
         } else {
@@ -298,7 +295,7 @@ socket_app.on("connection", (socket) => {
           foundLogin = true
         }
       } else if (request.response().url() === "https://lilydaleheights-vic.compass.education/Services/Activity.svc/GetLessonsByActivityId?sessionstate=readonly") { 
-        socket.emit("message", `${username.toUpperCase()}: Found response`)
+        socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Found response`)
         const res = await request.response().json()
         const responsebody = res.d
         let key = 0
@@ -360,37 +357,37 @@ socket_app.on("connection", (socket) => {
         doneYet[i] = true;
         }
     })
-    socket.emit("message", `${username.toUpperCase()}: Navigating to compass page`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Navigating to compass page`)
     await page.goto("https://lilydaleheights-vic.compass.education");
     await page.waitForSelector("#username");
-    socket.emit("message", `${username.toUpperCase()}: Inputting username`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Inputting username`)
     await page.$eval("#username", (el, username) => {
         el.value = username
     }, username)
-    socket.emit("message", `${username.toUpperCase()}: Inputting password`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Inputting password`)
     await page.$eval("#password", (el, password) => {
         el.value = password
     }, password)
-    socket.emit("message", `${username.toUpperCase()}: Clicking login button`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Clicking login button`)
     await page.$eval("#button1", el => {
         el.disabled = false;
         el.click()
     })
-    socket.emit("message", `${username.toUpperCase()}: Waiting for login response`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for login response`)
     while (foundLogin === false) {
       await sleep(250)
     }
     if (loginFailed === true) {
-      socket.emit("message", `${username.toUpperCase()}: Login failed`)
-      socket.emit("message", `${username.toUpperCase()}: Closing Puppeteer`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login failed`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Closing Puppeteer`)
       await browser.close()
-      socket.emit("message", `${username.toUpperCase()}: Sending response`)
-      socket.emit("data", {message: "it no worke", response_type: "error", error: "login failed"})
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+      socket.emit("error", 401, "it no worke", "login failed")
       return
     }
-    socket.emit("message", `${username.toUpperCase()}: waiting for compass homepage to load`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: waiting for compass homepage to load`)
     await page.waitForSelector("#c_bar");
-    socket.emit("message", `${username.toUpperCase()}: sorting through subjects`);
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: sorting through subjects`);
     const elements = await page.$$("#mnu_left > li:nth-child(4) > ul > li");
     const as = await page.evaluate(() => {
       let as = [];
@@ -404,17 +401,17 @@ socket_app.on("connection", (socket) => {
 
     });
     for (i; i<as.length; i++) {
-      socket.emit("message", `${username.toUpperCase()}: Navigating to subject ${i+1}`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Navigating to subject ${i+1}`)
       await page.goto(as[i]);
-      socket.emit("message", `${username.toUpperCase()}: Waiting for response`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Waiting for response`)
       while (!doneYet[i]) {
         await sleep(250);
       };
     };
-    socket.emit("message", `${username.toUpperCase()}: Closing browser`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Closing browser`)
     await browser.close()
-    socket.emit("message", `${username.toUpperCase()}: Sending response`)
-    socket.emit("data", {message: "pog it worker", response_type: "subjects", response_data: response})
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+    socket.emit("data", 200, "pog it worker", "subjects", response)
     return
   })
   socket.on("studentinfo", async (username, password) => {
@@ -425,10 +422,10 @@ socket_app.on("connection", (socket) => {
     let id = 0;
     let doneYet1 = false
     let doneYet2 = false
-    socket.emit("message", `${username.toUpperCase()}: Student info request recieved`)
-    socket.emit("message", `${username.toUpperCase()}: Starting Puppeteer`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Student info request recieved`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Starting Puppeteer`)
     const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
-    socket.emit("message", `${username.toUpperCase()}: Opening new page`)
+    socket.emit("message", new Date().toUTCString(), `${username.toUpperCase()}: Opening new page`)
     let page = await browser.newPage();
     await page.setRequestInterception(true);
     page.on('request', (req) => {
@@ -452,7 +449,7 @@ socket_app.on("connection", (socket) => {
           return
         }
         if (request.response().status() >= 300 && request.response().status() <= 399) {
-          socket.emit("message", `${username.toUpperCase()}: Login successful`)
+          socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Login successful`)
           loginFailed = false
           foundLogin = true
         } else {
@@ -513,51 +510,51 @@ socket_app.on("connection", (socket) => {
         doneYet2 = true
       }
     })
-    socket.emit("message", `${username.toUpperCase()}: navigating to compass site`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: navigating to compass site`)
     await page.goto("https://lilydaleheights-vic.compass.education");
     await page.waitForSelector("#username");
-    socket.emit("message", `${username.toUpperCase()}: inputting username`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: inputting username`)
     await page.$eval("#username", (el, username) => {
         el.value = username
     }, username)
-    socket.emit("message", `${username.toUpperCase()}: inputting password`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: inputting password`)
     await page.$eval("#password", (el, password) => {
         el.value = password
     }, password)
-    socket.emit("message", `${username.toUpperCase()}: clicking login button`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: clicking login button`)
     await page.$eval("#button1", el => {
         el.disabled = false;
         el.click()
     })
     while (foundLogin === false) {
-      socket.emit("message", `${username.toUpperCase()}: waiting for login response`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: waiting for login response`)
       await sleep(250)
     }
     if (loginFailed === true) {
-      socket.emit("message", `${username.toUpperCase()}: login failed`)
-      socket.emit("message", `${username.toUpperCase()}: Closing browser`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: login failed`)
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Closing browser`)
       await browser.close()
-      socket.emit("message", `${username.toUpperCase()}: Sending response`)
-      socket.emit("data", {message: "it no worke", response_type: "error", error: "login failed"})
+      socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: Sending response`)
+      socket.emit("data", 401, "it no worke", "login failed")
       return
     }
-    socket.emit("message", `${username.toUpperCase()}: waiting for compass homepage to load`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: waiting for compass homepage to load`)
     await page.waitForSelector("#c_bar")
-    socket.emit("message", `${username.toUpperCase()}: navigating to student info page`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: navigating to student info page`)
     await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx")
-    socket.emit("message", `${username.toUpperCase()}: waiting for response`)
+    socket.emit("message", 102, new Date().toUTCString(),  `${username.toUpperCase()}: waiting for response`)
     await page.waitForResponse((res) => {
       return res.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId") && res.status() === 200
     })
-    socket.emit("message", `${username.toUpperCase()}: found response`)
-    socket.emit("message", `${username.toUpperCase()}: waiting for info to be processed`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: found response`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: waiting for info to be processed`)
     while (doneYet1 !== true || doneYet2 !== true) {
       await sleep(100)
     }
-    socket.emit("message", `${username.toUpperCase()}: closing browser`)
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: closing browser`)
     await browser.close()
-    socket.emit("message", `${username.toUpperCase()}: sending response`)
-    socket.emit("data", {message: "pog it worker", response_type: "student_info", response_data: response})
+    socket.emit("message", 102, new Date().toUTCString(), `${username.toUpperCase()}: sending response`)
+    socket.emit("data", 200, "pog it worker", "student_info", response)
   })
 })
 app.get('*', (req, res) => {
