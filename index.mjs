@@ -95,42 +95,47 @@ socket_app.on("connection", (socket) => {
             let subject_code = task.activityName;
             let attachments = [];
             let submissions = [];
-            let description = task.description;
-            let official_due_date = task.dueDateTimestamp;
-            let individual_due_date = task.students[0].dueDateTimestamp;
-            individual_due_date ? individual_due_date = individual_due_date : individual_due_date = official_due_date;
+            let description = task.description !== "" ? task.description : null;
+            let due_date = task.students[0].dueDateTimestamp;
             let submission_status;
             let submission_svg_link;
-            if (task.students[0].submissionStatus === 1) {
-                submission_status = "Pending";
+            switch (task.students[0].submissionStatus) {
+              case 1:
+                submission_status = "pending";
                 submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/pending.svg";
-              } else if (task.students[0].submissionStatus === 2) {
+                break;
+              case 2: 
                 submission_status = "Overdue";
                 submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/overdue.svg";
-              } else if (task.students[0].submissionStatus === 3) {
+                break;
+              case 3:
                 submission_status = "On time";
                 submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/ontime.svg"
-              } else if (task.students[0].submissionStatus === 4) {
+                break;
+              case 4:
                 submission_status = "Recieved late";
                 submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/receivedlate.svg";
-              } else {
-                submission_status = "Unknown"
-              }
+                break;
+              default:
+                submission_status = null
+                submission_svg_link = null
+                break;
+            }
             if (task.attachments != null) {
                 for (let j = 0; j < task.attachments.length; j++) {
                     attachments.push({name: task.attachments[j].name, link: "https://lilydaleheights-vic.compass.education/Services/FileAssets.svc/DownloadFile?id=" + task.attachments[j].id + "&originalFileName=" + task.attachments[j].fileName.replace(/ /g, "%20"),});
                 }
               } else {
-                attachments = "None";
+                attachments = null;
               }
             if (task.students[0].submissions != null) {
               for (let j = 0; j < task.students[0].submissions.length; j++) {
                     submissions.push({name: task.students[0].submissions[j].fileName, link: "https://lilydaleheights-vic.compass.education/Services/FileDownload/FileRequestHandler?FileDownloadType=2&taskId=" + task.students[0].taskId + "&submissionId=" + task.students[0].submissions[j].id});
               }
             } else {
-              submissions = "None"
+              submissions = null
             }
-            response.push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
+            response.push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, due_date: due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
             id++; 
           }
         doneYet = true;
