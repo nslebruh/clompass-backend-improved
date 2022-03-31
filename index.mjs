@@ -51,7 +51,7 @@ socket_app.on("connection", (socket) => {
     let loginFailed = false
     let foundLogin = false
     let requestNumber = 0;
-    const response = [];
+    let response = {};
     socket.emit("message", 102, new Date().toISOString(), `${username}: starting puppeteer`)
     const browser = await puppeteer.launch({headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"]})
     socket.emit("message", 102, new Date().toISOString(), `${username}: opening new page`)
@@ -90,6 +90,7 @@ socket_app.on("connection", (socket) => {
         responsebody = responsebody.d.data;
         for (let i = 0; i < responsebody.length; i++) {
             let task = responsebody[i];
+            let uuid = task.id
             let name = task.name;
             let subject_name = task.subjectName;
             let subject_code = task.activityName;
@@ -135,7 +136,7 @@ socket_app.on("connection", (socket) => {
             } else {
               submissions = null
             }
-            response.push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, due_date: due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
+            response[task.id] = {name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, due_date: due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id, uuid: uuid,};
             id++; 
           }
         doneYet = true;
