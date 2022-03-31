@@ -96,7 +96,7 @@ socket_app.on("connection", (socket) => {
             let attachments = [];
             let submissions = [];
             let description = task.description !== "" ? task.description : null;
-            let due_date = task.students[0].dueDateTimestamp;
+            let due_date = task.dueDateTimestamp;
             let submission_status;
             let submission_svg_link;
             switch (task.students[0].submissionStatus) {
