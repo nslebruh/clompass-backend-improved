@@ -315,6 +315,7 @@ socket_app.on("connection", (socket) => {
         for (let j = 0; j<instances.length; j++) {
           let lesson = {
             key,
+            uuid: "",
             location: "",
             teacher: "",
             teacher_code: "",
@@ -328,6 +329,7 @@ socket_app.on("connection", (socket) => {
               url: ""
             }
           }
+          lesson.uuid = instances[j].id
           lesson.location = instances[j].l
           lesson.teacher = instances[j].ManagerTextReadable
           lesson.teacher_code = instances[j].m
@@ -342,7 +344,7 @@ socket_app.on("connection", (socket) => {
           } else {
             lesson.plan = null
           }
-          subject.lessons[lesson.node_id] = lesson
+          subject.lessons[lesson.uuid] = lesson
           key++
         }
         response[subject.school_id] = subject
