@@ -4,21 +4,6 @@ import { Server } from "socket.io";
 import cors from "cors"
 import puppeteer from "puppeteer"
 import path from "path"
-import { initializeApp } from "firebase/app"
-import { getDatabase, get, onValue, ref } from "firebase/database"
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBWtqnFupJqoKQpKqcJ5CXeImzZAddcL9I",
-  authDomain: "clompass-backend-lessonplans.firebaseapp.com",
-  projectId: "clompass-backend-lessonplans",
-  storageBucket: "clompass-backend-lessonplans.appspot.com",
-  messagingSenderId: "789799137905",
-  appId: "1:789799137905:web:d9e7e0ab90f983d73921d0",
-  measurementId: "G-KS88C35LTQ"
-};
-const f_app = initializeApp(firebaseConfig);
-const database = getDatabase(f_app)
-
 const PORT = process.env.PORT || 3001;
 
 function sleep(ms) {
@@ -40,6 +25,7 @@ const io = new Server(server)
 
 const socket_app = io.of("/get")
 socket_app.on("connection", (socket) => {
+  socket.emit("message", 101, new Date().toISOString(), "socket connected")
   console.log("Client connected")
   socket.on("disconnect", () => {
     console.log("Client disconnected")
@@ -272,7 +258,7 @@ socket_app.on("connection", (socket) => {
     let requestNumber = 0
     let loginFailed = false
     let foundLogin = false;
-    const response = [];
+    const response = {};
     let doneYet = {};
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Starting puppeteer`)
     const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
@@ -311,7 +297,7 @@ socket_app.on("connection", (socket) => {
           year: "",
           id: "",
           activity_id: "",
-          lessons: [],
+          lessons: {},
           teacher: "",
           teacher_code :"",
           teacher_image_url: "",
@@ -356,10 +342,10 @@ socket_app.on("connection", (socket) => {
           } else {
             lesson.plan = null
           }
-          subject.lessons.push(lesson)
+          subject.lessons[lesson.node_id] = lesson
           key++
         }
-        response.push(subject)
+        response[subject.school_id] = subject
         doneYet[i] = true;
         }
     })
@@ -561,6 +547,11 @@ socket_app.on("connection", (socket) => {
     await browser.close()
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: sending response`)
     socket.emit("data", 200, new Date().toISOString(), "pog it worker", "student_info", response)
+  })
+  socket.on("lessonplans", (lesson_urls) => {
+    for (i = 0; i < Object.Keys(lesson_urls).length; i++) {
+
+    }
   })
 })
 app.get('*', (req, res) => {
