@@ -30,9 +30,11 @@ socket_app.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected")
   })
-  socket.on("learningtasks", async (username, password) => {
+  socket.on("learningtasks", async (username, password, year = null) => {
     socket.emit("message", 102, new Date().toISOString(), `${username}: request recieved`)
+    let years = {"2013": "1", "2014": "2", "2015": "3", "2016": "4", "2017": "5", "2018": "6", "2019": "7", "2020": "12", "2021": "11", "2022": "14", "2023": "15", "2024": "16", "2025": "17"}
     let id = 0
+    year = year ? years[year] : null
     let doneYet = false
     let loginFailed = false
     let foundLogin = false
@@ -50,6 +52,7 @@ socket_app.on("connection", (socket) => {
             let body = req.postData()
             body = JSON.parse(body)
             body.limit = 500;
+            body.academicGroupId = year || body.academicGroupId
             delete body.forceTaskId
             body = JSON.stringify(body)
             req.continue({postData: body});
@@ -86,6 +89,7 @@ socket_app.on("connection", (socket) => {
             let due_date = task.dueDateTimestamp;
             let submission_status;
             let submission_svg_link;
+            let year = task.createdTimestamp.split("-")[0];
             switch (task.students[0].submissionStatus) {
               case 1:
                 submission_status = "pending";
@@ -122,7 +126,7 @@ socket_app.on("connection", (socket) => {
             } else {
               submissions = null
             }
-            response[task.id] = {name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, due_date: due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id, uuid: uuid,};
+            response[task.id] = {name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, due_date: due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id, uuid: uuid, year: year};
             id++; 
           }
         doneYet = true;
