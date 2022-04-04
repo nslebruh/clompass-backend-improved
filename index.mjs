@@ -34,7 +34,7 @@ socket_app.on("connection", (socket) => {
     socket.emit("message", 102, new Date().toISOString(), `${username}: request recieved`)
     let years = {"2013": "1", "2014": "2", "2015": "3", "2016": "4", "2017": "5", "2018": "6", "2019": "7", "2020": "12", "2021": "11", "2022": "14", "2023": "15", "2024": "16", "2025": "17"}
     let id = 0
-    year = year ? years[year] : null
+    year = year !== null ? years[year] : null
     let doneYet = false
     let loginFailed = false
     let foundLogin = false
@@ -52,7 +52,7 @@ socket_app.on("connection", (socket) => {
             let body = req.postData()
             body = JSON.parse(body)
             body.limit = 500;
-            body.academicGroupId = year || body.academicGroupId
+            body.academicGroupId = year !== null ? year : body.academicGroupId
             delete body.forceTaskId
             body = JSON.stringify(body)
             req.continue({postData: body});
@@ -554,10 +554,7 @@ socket_app.on("connection", (socket) => {
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: sending response`)
     socket.emit("data", 200, new Date().toISOString(), "pog it worker", "student_info", response)
   })
-  socket.on("lessonplans", (lesson_urls) => {
-    for (i = 0; i < Object.Keys(lesson_urls).length; i++) {
-
-    }
+  socket.on("lessonplans", (lessons) => {
   })
 })
 app.get('*', (req, res) => {
