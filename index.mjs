@@ -35,6 +35,7 @@ socket_app.on("connection", (socket) => {
     let years = {"2013": "1", "2014": "2", "2015": "3", "2016": "4", "2017": "5", "2018": "6", "2019": "7", "2020": "12", "2021": "11", "2022": "14", "2023": "15", "2024": "16", "2025": "17"}
     let id = 0
     year = year !== null ? years[year] : null
+    console.log(year)
     let doneYet = false
     let loginFailed = false
     let foundLogin = false
