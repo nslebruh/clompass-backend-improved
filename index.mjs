@@ -468,9 +468,10 @@ socket_app.on("connection", (socket) => {
       } else if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/ChronicleV2.svc/GetUserChronicleFeed")) {
         let responsebody = await request.response().json();
         responsebody = responsebody.d.data;
-        let list = []
+        let list = {}
         for (let i=0;i<responsebody.length;i++) {
           let data = responsebody[i].chronicleEntries[0];
+          let school_id = data.id
           let createdTimestamp = data.createdTimestamp;
           let occurredTimestamp = data.occurredTimestamp;
           let name = data.templateName
@@ -502,7 +503,7 @@ socket_app.on("connection", (socket) => {
             }
             chronicles.push({name: field_name, description: description, values: value})
           }
-          list.push({id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles})
+          list[school_id] = {id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles}
           id++
         }
         response.chronicles = list
