@@ -503,7 +503,7 @@ socket_app.on("connection", (socket) => {
             }
             chronicles.push({name: field_name, description: description, values: value})
           }
-          list[school_id] = {id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles}
+          list[school_id] = {id: id, createdTimestamp: createdTimestamp, occurredTimestamp: occurredTimestamp, name: name, data: chronicles, school_id: school_id}
           id++
         }
         response.chronicles = list
