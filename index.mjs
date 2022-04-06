@@ -10,15 +10,6 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// eslint-disable-next-line no-extend-native
-Date.prototype.addDays = function (days) {
-  let date = new Date(this.valueOf());
-  date.setDate(date.getDate() + days);
-  return date;
-}
-let date = new Date();
-console.log(date.addDays(7));
-
 const app = express();
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
@@ -571,8 +562,8 @@ socket_app.on("connection", (socket) => {
   socket.on("getcalender", async (username, password, month, year) => {
     let start_date = new Date(`1/${month}/${year}`);
     start_date = `${start_date.getFullYear()}-${start_date.getMonth()+1}/${start_date.getDate()}`
-    let end_date = start_date.addDays(35)
-    end_date = `${endt_date.getFullYear()}-${end_date.getMonth()+1}/${end_date.getDate()}`
+    let end_date = start_date.setDate(date.getDate() + 35)
+    end_date = `${end_date.getFullYear()}-${end_date.getMonth()+1}/${end_date.getDate()}`
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Start date: ${start_date}, End date: ${end_date}`)
     return
 
