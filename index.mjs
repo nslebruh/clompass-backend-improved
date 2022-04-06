@@ -1,5 +1,5 @@
 import express from "express";
-import { createServer } from "http";
+import { createServer, request } from "http";
 import { Server } from "socket.io";
 import cors from "cors"
 import puppeteer from "puppeteer"
@@ -9,6 +9,15 @@ const PORT = process.env.PORT || 3001;
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// eslint-disable-next-line no-extend-native
+Date.prototype.addDays = function (days) {
+  let date = new Date(this.valueOf());
+  date.setDate(date.getDate() + days);
+  return date;
+}
+let date = new Date();
+console.log(date.addDays(7));
 
 const app = express();
 app.use(function (req, res, next) {
@@ -557,6 +566,45 @@ socket_app.on("connection", (socket) => {
     socket.emit("data", 200, new Date().toISOString(), "pog it worker", "student_info", response)
   })
   socket.on("lessonplans", (lessons) => {
+
+  })
+  socket.on("getcalender", async (username, password, month, year) => {
+    let start_date = new Date(`1/${month}/${year}`);
+    start_date = `${start_date.getFullYear()}-${start_date.getMonth()+1}/${start_date.getDate()}`
+    let end_date = start_date.addDays(35)
+    end_date = `${endt_date.getFullYear()}-${end_date.getMonth()+1}/${end_date.getDate()}`
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Start date: ${start_date}, End date: ${end_date}`)
+    return
+
+    let responsenumber = 0
+    let loginFailed = false
+    let foundLogin = false
+    let response = {};
+    let id = 0;
+    let doneyet = false
+    
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Student info request recieved`)
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Starting Puppeteer`)
+    const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+    socket.emit("message", new Date().toISOString(), `${username.toUpperCase()}: Opening new page`)
+    let page = await browser.newPage();
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
+        req.abort();
+      } else if (req.url().includes("https://lilydaleheights-vic.compass.education/Services/Calendar.svc/GetCalendarEventsByUser")) {
+        let postData = req.postData()
+        postData = JSON.parse(postData)
+        if (postData.homePage === false) {
+          postData.startDate = start_date
+          postData.endDate = end_date;
+        }
+        postData = JSON.stringify(postData)
+        req.continue({postData: postData})
+      } else {
+        req.continue()
+      }
+    });
   })
 })
 app.get('*', (req, res) => {
