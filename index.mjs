@@ -559,7 +559,7 @@ socket_app.on("connection", (socket) => {
   socket.on("lessonplans", (lessons) => {
 
   })
-  socket.on("getcalender", async (username, password, month, year) => {
+  socket.on("getcalender", async (username, password, year, month) => {
     let start_date = new Date(`1/${month}/${year}`);
     let end_date = start_date.setDate(start_date.getDate() + 35)
     end_date = new Date(start_date.setDate(start_date.getDate() + 35))
