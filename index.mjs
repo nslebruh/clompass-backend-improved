@@ -562,7 +562,7 @@ socket_app.on("connection", (socket) => {
   socket.on("getcalender", async (username, password, month, year) => {
     let start_date = new Date(`1/${month}/${year}`);
     start_date = `${start_date.getFullYear()}-${start_date.getMonth()+1}/${start_date.getDate()}`
-    let end_date = start_date.setDate(date.getDate() + 35)
+    let end_date = start_date.setDate(start_date.getDate() + 35)
     end_date = `${end_date.getFullYear()}-${end_date.getMonth()+1}/${end_date.getDate()}`
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Start date: ${start_date}, End date: ${end_date}`)
     return
