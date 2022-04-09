@@ -564,18 +564,16 @@ socket_app.on("connection", (socket) => {
     let date = new Date(year, month-1, day)
     let start_date = date.toLocaleDateString().split('/')
     start_date = `${start_date[2]}-${start_date[0]}-${start_date[1]}`
-    let end_date = addDays(date, 35)
+    let end_date = addDays(date, 34)
     end_date = end_date.toLocaleDateString().split("/")
     end_date = `${end_date[2]}-${end_date[0]}-${end_date[1]}`
     function addDays(date, days) {
-        var result = new Date(date);
-        result.setDate(result.getDate() + days);
-        return result;
-      }
+      var result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    }
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Start date: ${start_date}, End date: ${end_date}`)
-    return
-
-    let responsenumber = 0
+    let requestNumber = 0
     let loginFailed = false
     let foundLogin = false
     let response = {};
@@ -604,6 +602,29 @@ socket_app.on("connection", (socket) => {
         req.continue()
       }
     });
+    page.on("requestfinished", async (req) => {
+      if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+        if (requestNumber !== 1) {
+          requestNumber++
+          return
+        }
+        if (request.response().status() >= 300 && request.response().status() <= 399) {
+          socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Login successful`)
+          loginFailed = false
+          foundLogin = true
+        } else {
+          loginFailed = true
+          foundLogin = true
+        }
+      } else if (req.url().includes("https://lilydaleheights-vic.compass.education/Services/Calendar.svc/GetCalendarEventsByUser")) {
+        if (JSON.parse(req.postData()).homePage === false) {
+          let res = await req.response().json()
+          let data = res.d
+          socket.emit("message", new Date().toISOString(), JSON.stringify(data))
+        }
+      }
+      
+    })
   })
 })
 app.get('*', (req, res) => {
