@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import cors from "cors"
 import puppeteer from "puppeteer"
 import path from "path"
+import e from "cors";
 const PORT = process.env.PORT || 3001;
 
 function sleep(ms) {
@@ -572,6 +573,7 @@ socket_app.on("connection", (socket) => {
       result.setDate(result.getDate() + days);
       return result;
     }
+    console.log(`${username.toUpperCase()}: Start date: ${start_date}, End date: ${end_date}`)
     socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Start date: ${start_date}, End date: ${end_date}`)
     let requestNumber = 0
     let loginFailed = false
@@ -603,12 +605,12 @@ socket_app.on("connection", (socket) => {
       }
     });
     page.on("requestfinished", async (req) => {
-      if (request.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
+      if (req.url().includes("https://lilydaleheights-vic.compass.education/login.aspx")) {
         if (requestNumber !== 1) {
           requestNumber++
           return
         }
-        if (request.response().status() >= 300 && request.response().status() <= 399) {
+        if (req.response().status() >= 300 && req.response().status() <= 399) {
           socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Login successful`)
           loginFailed = false
           foundLogin = true
@@ -620,11 +622,94 @@ socket_app.on("connection", (socket) => {
         if (JSON.parse(req.postData()).homePage === false) {
           let res = await req.response().json()
           let data = res.d
-          socket.emit("message", new Date().toISOString(), JSON.stringify(data))
+          for (var i = 0; i < data.length; i++) {
+            let d = data[i]
+            if (d.activityId !== 0 && d.activityType === 1) {
+              let instanceId = d.instanceId;
+              let title = d.longTitleWithoutTime;
+              let new_title;
+              let room;
+              let teacher;
+              let subject;
+              let classChanged;
+              if (title.includes("1 - ") || title.includes("2 - ") || title.includes("3 - ") || title.includes("4 - ")) {
+                if (title.includes("<strike>")) {
+                  classChanged = 1
+                } else {
+                  classChanged = 0
+                }
+                title = title.split(" - ")
+                subject = title[1]
+                if (title[2].includes("&nbsp;")) {
+                  room = title[2].split("&nbsp; ")[1]
+                } else {
+                  room = title[2]
+                }
+                if (title[3].includes("&nbsp;")) {
+                  teacher = title[3].split("&nbsp; ")[1]
+                } else {
+                  teacher = title[3]
+                }
+              }
+              response[instanceId] = {
+                startDate: new Date(d.start).valueOf(),
+                endDate: new Date(d.finish).valueOf(),
+                formattedStart: new Date(d.start).toLocaleTimeString("us-en", { hour: 'numeric', minute: 'numeric', hour12: true }),
+                formattedEnd: new Date(d.finish).toLocaleTimeString("us-en", { hour: 'numeric', minute: 'numeric', hour12: true }),
+                classChanged: classChanged,
+                subject: subject,
+                teacher: teacher, 
+                room: room,
+                text: new_title,
+                uid: instanceId,
+              }
+            }
+
+          }
+          doneyet = true
         }
       }
-      
     })
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: navigating to compass site`)
+    await page.goto("https://lilydaleheights-vic.compass.education");
+    await page.waitForSelector("#username");
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: inputting username`)
+    await page.$eval("#username", (el, username) => {
+        el.value = username
+    }, username)
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: inputting password`)
+    await page.$eval("#password", (el, password) => {
+        el.value = password
+    }, password)
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: clicking login button`)
+    await page.$eval("#button1", el => {
+        el.disabled = false;
+        el.click()
+    })
+    while (foundLogin === false) {
+      socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: waiting for login response`)
+      await sleep(250)
+    }
+    if (loginFailed === true) {
+      socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: login failed`)
+      socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Closing browser`)
+      await browser.close()
+      socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Sending response`)
+      socket.emit("data", 401, new Date().toISOString(), "it no worke", "login failed")
+      return
+    }
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: waiting for compass homepage to load`)
+    await page.waitForSelector("#c_bar")
+    await page.goto("https://lilydaleheights-vic.compass.education/Organise/Calendar/")
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Navigating to calender page`)
+    while (doneyet === false) {
+      await sleep(100)
+    }
+    socket.emit("message", 102, new Date().toISOString(), `${username.toUpperCase()}: Sending response`)
+    await browser.close()
+    socket.emit("data", 200, new Date().toISOString(), "pog it worker", "schedule_data", response )
+    return
+
   })
 })
 app.get('*', (req, res) => {
